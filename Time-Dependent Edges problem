@@ -1,0 +1,140 @@
+#include <stdio.h>
+#include <stdlib.h>
+
+#define NMAX 200005
+#define MMAX 400005
+#define INF 4000000000000000000LL
+
+typedef long long ll;
+
+typedef struct {
+    int dest;
+    ll startTime;
+    ll interval;
+    ll travel;
+    int next;
+} Train;
+
+Train graph[MMAX];
+int firstEdge[NMAX];
+int edgePtr = 0;
+
+void insertEdge(int from, int to, ll start, ll gap, ll time) {
+    graph[edgePtr].dest = to;
+    graph[edgePtr].startTime = start;
+    graph[edgePtr].interval = gap;
+    graph[edgePtr].travel = time;
+    graph[edgePtr].next = firstEdge[from];
+    firstEdge[from] = edgePtr++;
+}
+
+typedef struct {
+    ll time;
+    int station;
+} Node;
+
+Node pq[MMAX];
+int pqSize = 0;
+
+void swap(Node *a, Node *b) {
+    Node t = *a;
+    *a = *b;
+    *b = t;
+}
+
+void heapPush(ll t, int v) {
+    pq[++pqSize].time = t;
+    pq[pqSize].station = v;
+
+    int idx = pqSize;
+    while (idx > 1) {
+        int parent = idx / 2;
+        if (pq[parent].time <= pq[idx].time) break;
+        swap(&pq[parent], &pq[idx]);
+        idx = parent;
+    }
+}
+
+Node heapPop() {
+    Node res = pq[1];
+    pq[1] = pq[pqSize--];
+
+    int idx = 1;
+    while (1) {
+        int left = idx * 2;
+        int right = left + 1;
+        int smallest = idx;
+
+        if (left <= pqSize && pq[left].time < pq[smallest].time)
+            smallest = left;
+        if (right <= pqSize && pq[right].time < pq[smallest].time)
+            smallest = right;
+
+        if (smallest == idx) break;
+
+        swap(&pq[idx], &pq[smallest]);
+        idx = smallest;
+    }
+
+    return res;
+}
+
+ll bestTime[NMAX];
+
+int main() {
+    int n, m, source, target;
+    scanf("%d %d %d %d", &n, &m, &source, &target);
+
+    for (int i = 1; i <= n; i++) {
+        firstEdge[i] = -1;
+        bestTime[i] = INF;
+    }
+
+    for (int i = 0; i < m; i++) {
+        int u, v;
+        ll first, freq, dur;
+        scanf("%d %d %lld %lld %lld", &u, &v, &first, &freq, &dur);
+        insertEdge(u, v, first, freq, dur);
+    }
+
+    bestTime[source] = 0;
+    heapPush(0, source);
+
+    while (pqSize > 0) {
+        Node cur = heapPop();
+
+        if (cur.time != bestTime[cur.station])
+            continue;
+
+        for (int id = firstEdge[cur.station]; id != -1; id = graph[id].next) {
+            ll leave;
+
+            if (graph[id].interval == 0) {
+                if (cur.time > graph[id].startTime)
+                    continue;
+                leave = graph[id].startTime;
+            } else {
+                if (cur.time <= graph[id].startTime) {
+                    leave = graph[id].startTime;
+                } else {
+                    ll wait = (cur.time - graph[id].startTime + graph[id].interval - 1) / graph[id].interval;
+                    leave = graph[id].startTime + wait * graph[id].interval;
+                }
+            }
+
+            ll reach = leave + graph[id].travel;
+
+            if (reach < bestTime[graph[id].dest]) {
+                bestTime[graph[id].dest] = reach;
+                heapPush(reach, graph[id].dest);
+            }
+        }
+    }
+
+    if (bestTime[target] == INF)
+        printf("-1\n");
+    else
+        printf("%lld\n", bestTime[target]);
+
+    return 0;
+}
