@@ -1,0 +1,57 @@
+#include <stdio.h>
+#include <stdlib.h>
+
+int main() {
+    int n;
+    long long L;
+
+    scanf("%d %lld", &n, &L);
+
+    long long arr[n];
+
+    for (int i = 0; i < n; i++) {
+        scanf("%lld", &arr[i]);
+    }
+
+    int maxDeque[n], minDeque[n];
+    int maxFront = 0, maxBack = -1;
+    int minFront = 0, minBack = -1;
+
+    int left = 0;
+    int longest = 0;
+
+    for (int right = 0; right < n; right++) {
+
+        while (maxFront <= maxBack && arr[maxDeque[maxBack]] <= arr[right]) {
+            maxBack--;
+        }
+        maxDeque[++maxBack] = right;
+
+        while (minFront <= minBack && arr[minDeque[minBack]] >= arr[right]) {
+            minBack--;
+        }
+        minDeque[++minBack] = right;
+
+        while (arr[maxDeque[maxFront]] - arr[minDeque[minFront]] > L) {
+
+            if (maxDeque[maxFront] == left) {
+                maxFront++;
+            }
+
+            if (minDeque[minFront] == left) {
+                minFront++;
+            }
+
+            left++;
+        }
+
+        int currentLength = right - left + 1;
+        if (currentLength > longest) {
+            longest = currentLength;
+        }
+    }
+
+    printf("%d\n", longest);
+
+    return 0;
+}
