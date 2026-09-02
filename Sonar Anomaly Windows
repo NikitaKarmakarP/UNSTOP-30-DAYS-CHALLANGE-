@@ -1,0 +1,92 @@
+#include <iostream>
+#include <vector>
+#include <algorithm>
+using namespace std;
+
+const int MAX_BIT = 19;
+
+struct Trie {
+    Trie *child[2];
+    vector<int> idx;
+    Trie() {
+        child[0] = child[1] = nullptr;
+    }
+};
+
+Trie *root = new Trie();
+
+void insertNumber(int value, int pos) {
+    Trie *cur = root;
+    for (int b = MAX_BIT; b >= 0; b--) {
+        int bit = (value >> b) & 1;
+        if (!cur->child[bit])
+            cur->child[bit] = new Trie();
+        cur = cur->child[bit];
+        cur->idx.push_back(pos);
+    }
+}
+
+bool present(const vector<int> &v, int l, int r) {
+    auto it = lower_bound(v.begin(), v.end(), l);
+    return it != v.end() && *it <= r;
+}
+
+int getAnswer(int x, int l, int r) {
+    Trie *cur = root;
+    int ans = 0;
+
+    for (int b = MAX_BIT; b >= 0; b--) {
+        int bit = (x >> b) & 1;
+        int want = bit ^ 1;
+
+        if (cur->child[want] && present(cur->child[want]->idx, l, r)) {
+            ans |= (1 << b);
+            cur = cur->child[want];
+        } else {
+            cur = cur->child[bit];
+        }
+    }
+    return ans;
+}
+
+void user_logic(int n, const vector<int>& buoy_codes,
+                const vector<vector<int>>& queries,
+                vector<int>& results) {
+
+    root = new Trie();
+
+    for (int i = 0; i < n; i++)
+        insertNumber(buoy_codes[i], i + 1);   // store 1-based index
+
+    for (int i = 0; i < (int)queries.size(); i++) {
+        results[i] = getAnswer(
+            queries[i][2],
+            queries[i][0],
+            queries[i][1]
+        );
+    }
+}
+
+int main() {
+    int n;
+    cin >> n;
+
+    vector<int> buoy_codes(n);
+    for (int i = 0; i < n; i++)
+        cin >> buoy_codes[i];
+
+    int q;
+    cin >> q;
+
+    vector<vector<int>> queries(q, vector<int>(3));
+    for (int i = 0; i < q; i++)
+        cin >> queries[i][0] >> queries[i][1] >> queries[i][2];
+
+    vector<int> results(q);
+    user_logic(n, buoy_codes, queries, results);
+
+    for (int x : results)
+        cout << x << "\n";
+
+    return 0;
+}
