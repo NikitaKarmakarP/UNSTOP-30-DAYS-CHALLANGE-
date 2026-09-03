@@ -1,0 +1,91 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+struct Query {
+    int l, r, idx;
+};
+
+class FenwickTree {
+    vector<int> bit;
+    int n;
+
+public:
+    FenwickTree(int size) {
+        n = size;
+        bit.assign(n + 1, 0);
+    }
+
+    void update(int index, int value) {
+        while (index <= n) {
+            bit[index] += value;
+            index += index & -index;
+        }
+    }
+
+    int query(int index) {
+        int sum = 0;
+        while (index > 0) {
+            sum += bit[index];
+            index -= index & -index;
+        }
+        return sum;
+    }
+
+    int rangeQuery(int left, int right) {
+        return query(right) - query(left - 1);
+    }
+};
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int n;
+    cin >> n;
+
+    vector<int> artist(n + 1);
+    for (int i = 1; i <= n; i++) {
+        cin >> artist[i];
+    }
+
+    int q;
+    cin >> q;
+
+    vector<Query> queries(q);
+    for (int i = 0; i < q; i++) {
+        cin >> queries[i].l >> queries[i].r;
+        queries[i].idx = i;
+    }
+
+    sort(queries.begin(), queries.end(), [](const Query &a, const Query &b) {
+        return a.r < b.r;
+    });
+
+    FenwickTree ft(n);
+    unordered_map<int, int> lastPosition;
+    vector<int> answer(q);
+
+    int currentRight = 1;
+
+    for (const auto &qr : queries) {
+        while (currentRight <= qr.r) {
+            int value = artist[currentRight];
+
+            if (lastPosition.count(value)) {
+                ft.update(lastPosition[value], -1);
+            }
+
+            ft.update(currentRight, 1);
+            lastPosition[value] = currentRight;
+            currentRight++;
+        }
+
+        answer[qr.idx] = ft.rangeQuery(qr.l, qr.r);
+    }
+
+    for (int x : answer) {
+        cout << x << "\n";
+    }
+
+    return 0;
+}
