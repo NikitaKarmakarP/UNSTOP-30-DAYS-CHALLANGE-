@@ -1,0 +1,64 @@
+#include <iostream>
+#include <vector>
+#include <deque>
+using namespace std;
+
+struct Equation {
+    long long slope;
+    long long intercept;
+
+    long long evaluate(long long x) const {
+        return slope * x + intercept;
+    }
+};
+
+bool removeMiddle(const Equation &a, const Equation &b, const Equation &c) {
+    return (__int128)(c.intercept - a.intercept) * (a.slope - b.slope) <=
+           (__int128)(b.intercept - a.intercept) * (a.slope - c.slope);
+}
+
+long long minCalibrationEnergy(int n, long long w, const vector<long long> &energy) {
+    vector<long long> best(n + 1);
+    deque<Equation> hull;
+
+    best[1] = energy[1];
+
+    hull.push_back({-2LL * w, best[1] + w});
+
+    for (int day = 2; day <= n; day++) {
+
+        while (hull.size() > 1 &&
+               hull[0].evaluate(day) >= hull[1].evaluate(day)) {
+            hull.pop_front();
+        }
+
+        best[day] = energy[day] + w * 1LL * day * day + hull.front().evaluate(day);
+
+        Equation nextLine;
+        nextLine.slope = -2LL * w * day;
+        nextLine.intercept = best[day] + w * 1LL * day * day;
+
+        while (hull.size() > 1 &&
+               removeMiddle(hull[hull.size() - 2], hull[hull.size() - 1], nextLine)) {
+            hull.pop_back();
+        }
+
+        hull.push_back(nextLine);
+    }
+
+    return best[n];
+}
+
+int main() {
+    int n;
+    long long w;
+    cin >> n >> w;
+
+    vector<long long> energy(n + 1);
+    for (int i = 1; i <= n; i++) {
+        cin >> energy[i];
+    }
+
+    cout << minCalibrationEnergy(n, w, energy);
+    return 0;
+}
