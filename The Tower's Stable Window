@@ -1,0 +1,75 @@
+#include <iostream>
+#include <vector>
+#include <deque>
+#include <unordered_map>
+using namespace std;
+
+void user_logic(int N, int D, const vector<int>& readings, int &length, int &start_second) {
+    unordered_map<int, int> lastIndex;
+    deque<int> maxDeque, minDeque;
+
+    int left = 0;
+    length = 0;
+    start_second = 1;
+
+    for (int right = 0; right < N; right++) {
+
+       
+        if (lastIndex.count(readings[right]) && lastIndex[readings[right]] >= left) {
+            left = lastIndex[readings[right]] + 1;
+        }
+        lastIndex[readings[right]] = right;
+
+       
+        while (!maxDeque.empty() && readings[maxDeque.back()] <= readings[right])
+            maxDeque.pop_back();
+        maxDeque.push_back(right);
+
+        
+        while (!minDeque.empty() && readings[minDeque.back()] >= readings[right])
+            minDeque.pop_back();
+        minDeque.push_back(right);
+
+       
+        while (!maxDeque.empty() && maxDeque.front() < left)
+            maxDeque.pop_front();
+        while (!minDeque.empty() && minDeque.front() < left)
+            minDeque.pop_front();
+
+        
+        while (!maxDeque.empty() && !minDeque.empty() &&
+               (long long)readings[maxDeque.front()] - readings[minDeque.front()] > D) {
+
+            if (maxDeque.front() == left) maxDeque.pop_front();
+            if (minDeque.front() == left) minDeque.pop_front();
+            left++;
+
+            while (!maxDeque.empty() && maxDeque.front() < left)
+                maxDeque.pop_front();
+            while (!minDeque.empty() && minDeque.front() < left)
+                minDeque.pop_front();
+        }
+
+        int currLen = right - left + 1;
+
+        if (currLen > length || (currLen == length && left + 1 < start_second)) {
+            length = currLen;
+            start_second = left + 1;  
+        }
+    }
+}
+
+int main() {
+    int N, D;
+    cin >> N >> D;
+
+    vector<int> readings(N);
+    for (int i = 0; i < N; i++)
+        cin >> readings[i];
+
+    int length = 0, start_second = 0;
+    user_logic(N, D, readings, length, start_second);
+
+    cout << length << " " << start_second << endl;
+    return 0;
+}
