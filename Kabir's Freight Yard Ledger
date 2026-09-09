@@ -1,0 +1,66 @@
+#include <iostream>
+#include <vector>
+#include <stack>
+#include <unordered_map>
+using namespace std;
+
+void user_logic(int n, vector<pair<int, int>>& wagons,
+                vector<pair<int, int>>& result) {
+
+    unordered_map<int, long long> gapSum;
+
+    stack<int> st;
+
+    // Find the nearest strictly heavier wagon ahead
+    for (int i = n - 1; i >= 0; --i) {
+
+        while (!st.empty() &&
+               wagons[st.top()].first <= wagons[i].first) {
+            st.pop();
+        }
+
+        if (!st.empty()) {
+            gapSum[wagons[i].second] += (st.top() - i);
+        }
+
+        st.push(i);
+    }
+
+    // Output destinations in their original first-appearance order
+    unordered_map<int, bool> used;
+
+    for (int i = 0; i < n; ++i) {
+
+        int destination = wagons[i].second;
+
+        if (!used[destination]) {
+            used[destination] = true;
+
+            result.push_back({
+                destination,
+                (int)gapSum[destination]
+            });
+        }
+    }
+}
+
+int main() {
+    int n;
+    cin >> n;
+
+    vector<pair<int, int>> wagons(n);
+
+    for (int i = 0; i < n; ++i) {
+        cin >> wagons[i].first >> wagons[i].second;
+    }
+
+    vector<pair<int, int>> result;
+
+    user_logic(n, wagons, result);
+
+    for (const auto& x : result) {
+        cout << x.first << " " << x.second << '\n';
+    }
+
+    return 0;
+}
