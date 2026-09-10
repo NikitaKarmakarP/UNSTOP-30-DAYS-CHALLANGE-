@@ -1,0 +1,87 @@
+#include <iostream>
+#include <vector>
+using namespace std;
+
+struct Node {
+    int child[2];
+    int cnt;
+    Node() {
+        child[0] = child[1] = -1;
+        cnt = 0;
+    }
+};
+
+long long user_logic(int n, int K, const vector<int>& w) {
+    vector<int> prefix(n + 1, 0);
+    for (int i = 1; i <= n; i++)
+        prefix[i] = prefix[i - 1] ^ w[i - 1];
+
+    vector<Node> trie(1);
+
+    auto insert = [&](int x) {
+        int node = 0;
+        trie[node].cnt++;
+        for (int b = 30; b >= 0; b--) {
+            int bit = (x >> b) & 1;
+            if (trie[node].child[bit] == -1) {
+                trie[node].child[bit] = trie.size();
+                trie.push_back(Node());
+            }
+            node = trie[node].child[bit];
+            trie[node].cnt++;
+        }
+    };
+
+    auto erase = [&](int x) {
+        int node = 0;
+        trie[node].cnt--;
+        for (int b = 30; b >= 0; b--) {
+            int bit = (x >> b) & 1;
+            node = trie[node].child[bit];
+            trie[node].cnt--;
+        }
+    };
+
+    auto query = [&](int x) {
+        int node = 0;
+        int ans = 0;
+        for (int b = 30; b >= 0; b--) {
+            int bit = (x >> b) & 1;
+            int want = bit ^ 1;
+            if (trie[node].child[want] != -1 &&
+                trie[trie[node].child[want]].cnt > 0) {
+                ans |= (1 << b);
+                node = trie[node].child[want];
+            } else {
+                node = trie[node].child[bit];
+            }
+        }
+        return ans;
+    };
+
+    insert(prefix[0]);
+
+    long long ans = 0;
+
+    for (int r = 1; r <= n; r++) {
+        if (r - K - 1 >= 0)
+            erase(prefix[r - K - 1]);
+
+        ans = max(ans, (long long)query(prefix[r]));
+        insert(prefix[r]);
+    }
+
+    return ans;
+}
+
+int main() {
+    int n, K;
+    cin >> n >> K;
+
+    vector<int> w(n);
+    for (int i = 0; i < n; i++)
+        cin >> w[i];
+
+    cout << user_logic(n, K, w) << endl;
+    return 0;
+}
