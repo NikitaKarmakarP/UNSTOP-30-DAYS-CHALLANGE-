@@ -1,0 +1,58 @@
+#include <iostream>
+#include <unordered_map>
+#include <vector>
+#include <algorithm>
+
+using namespace std;
+
+struct Entry {
+    int id;
+    int freq;
+    int firstPos;
+};
+
+int main() {
+    int N, K;
+    cin >> N >> K;
+
+    unordered_map<int, int> count;
+    unordered_map<int, int> firstSeen;
+
+    for (int i = 1; i <= N; i++) {
+        char op;
+        int id;
+        cin >> op >> id;
+
+        if (op == '+') {
+            count[id]++;
+            if (firstSeen.find(id) == firstSeen.end()) {
+                firstSeen[id] = i;
+            }
+        } else {
+            count[id]--;
+        }
+    }
+
+    vector<Entry> records;
+
+    for (auto &x : count) {
+        if (x.second > 0) {
+            records.push_back({x.first, x.second, firstSeen[x.first]});
+        }
+    }
+
+    sort(records.begin(), records.end(),
+         [](const Entry &a, const Entry &b) {
+             if (a.freq != b.freq)
+                 return a.freq > b.freq;
+             return a.firstPos < b.firstPos;
+         });
+
+    int limit = min(K, (int)records.size());
+
+    for (int i = 0; i < limit; i++) {
+        cout << records[i].id << " " << records[i].freq << "\n";
+    }
+
+    return 0;
+}
